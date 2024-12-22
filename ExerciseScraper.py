@@ -1,6 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
-from pymongo import MongoClient
+import pymongo
 import time
 import selenium
 from selenium import webdriver
@@ -27,12 +27,12 @@ for i in range(44):
     if (link not in exerciseUrls and (link != "https://www.muscleandstrength.com/exercises/palmar-fascia" and link != "https://www.muscleandstrength.com/exercises/plantar-fascia")): #Exclude these "muscle" groups
         exerciseUrls.append(link)
 
-print(exerciseUrls)
+
 print(len(exerciseUrls))
 
 for exerciseUrl in exerciseUrls:
     driver.get(exerciseUrl)
-    time.sleep(3)
+    time.sleep(1)
 
     try:
         title = driver.find_element(By.TAG_NAME, 'h1').text
@@ -42,6 +42,15 @@ for exerciseUrl in exerciseUrls:
         print(f"Error extracting data from {exerciseUrl}: {e}")
 
 driver.close()
+
+
+
+
+client = pymongo.MongoClient("mongodb://localhost:27017/")
+testDb = client["test"]
+
+exercisesData = testDb["exercises"]
+
 
 ##
 ##{
