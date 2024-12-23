@@ -2,6 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 import pymongo
 import time
+import re
 import selenium
 from selenium import webdriver
 from selenium.common import NoSuchElementException, ElementNotInteractableException
@@ -57,15 +58,27 @@ def getAttributes(aElements, exercisesNames):
             primaryMuscle = driver.find_element(By.CSS_SELECTOR, "div.field-item.even a").text
             otherA = driver.find_elements(By.CSS_SELECTOR, 'div.node-stats-block ul li')[1:]
             otherAValues = [attribute.text.split('\n')[1] for attribute in otherA]
+            
+            try:
+                youtubeURL = driver.find_element(By.CSS_SELECTOR, 'div.video.responsive-embed.widescreen .video-wrap iframe').get_attribute("src")
+            except NoSuchElementException:
+                youtubeURL = ''
+                
+            if ("youtube" in youtubeURL):
+                print("URL is: ", youtubeURL)
+                pattern = r"https://www\.youtube\.com/embed/([^?&]+)"
+                vidID = re.search(pattern,youtubeURL).group(1)
+            else:
+                vidID=None
             print("Current exercise: " + exercisesNames[index])
         
-
             data[exercisesNames[index]] = {
             "primaryMuscle":primaryMuscle,
             "type":otherAValues[0],
             "equipment":otherAValues[1],
             "level":otherAValues[4],
-            "secondaryMuscles":otherAValues[5]
+            "secondaryMuscles":otherAValues[5],
+            "image": vidID
             }
            
             index+=1
@@ -101,49 +114,7 @@ for exerciseUrl in exerciseUrls: # For each subpage
 driver.close()
 
 
-client = pymongo.MongoClient("mongodb://localhost:27017/")
-testDb = client["test"]
+#client = pymongo.MongoClient("mongodb://localhost:27017/")
+#testDb = client["test"]
 
-exercisesData = testDb["exercises"]
-
-
-##
-##{
-##    'exercise1': {
-##        type:
-##        equipment:
-##        primaryMuscles: []
-##        secondary: []
-
-##    }
-##    'exercise2': {
-##        type:
-##        equipment:
-##        primaryMuscles: []
-##        secondary: []
-
-##    }
-        
-##Sample
-
-#driver.get("https://www.muscleandstrength.com/exercises/abs")
-#cableCrunch = driver.find_element(By.XPATH, "//a[@href='/exercises/cable-crunch.html']")
-
-#print(cableCrunch.text)
-
-#cableCrunch.click()
-
-#temp = driver.find_element(By.TAG_NAME, value = 'h5')
-
-#print(temp.text)
-
-
-
-
-
-
-
-
-##}
-
-
+#exercisesData = testDb["exercises"]
