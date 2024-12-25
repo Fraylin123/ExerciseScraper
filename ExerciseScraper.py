@@ -13,6 +13,7 @@ def getPage(url):
         url = f"{base_url}{url}"
 
     headers = {'User-Agent': 'Mozilla/5.0'}
+    time.sleep(1)
     r = requests.get(url, headers=headers)
     r.raise_for_status()
     return r.text
@@ -24,24 +25,27 @@ def individualExercise(url):
     try:
         primaryMuscle = soup.select_one("div.field-item.even a").text.strip()
         otherA = soup.select("div.node-stats-block ul li")[1:]
-        print(otherA[1].text)
-        print(otherA[2].text)
-        print(otherA[3].text)
+    
+        otherAValues = [attribute.contents[1] for attribute in otherA]
+        otherAValues[-1] = otherA[-1].contents[2].text.strip()
+        
 
-        print("exiting")
-        exit()
-        otherAValues = [attribute.text.split("\n")[1] for attribute in otherA]
+        #print(otherAValues)
+        #print("exiting")
+        #exit()
         
         youtubeURL = None
         youtubeElement = soup.select_one("div.video.responsive-embed.widescreen .video-wrap iframe")
+        vidID = None
 
         if youtubeElement:
             youtubeURL = youtubeElement.get("src", "")
             if "youtube" in youtubeURL:
                 pattern =  r"https://www\.youtube\.com/embed/([^?&]+)"
                 vidID = re.search(pattern, youtubeURL).group(1)
-            else:
-                vidID = None
+                print("Vid id is: ", vidID)
+            
+                
         
         return {
             "primaryMuscle":primaryMuscle,
@@ -58,21 +62,26 @@ def individualExercise(url):
 
 def getCategory(url):
     page = 1
-    index = 0
     while True:
         print(f"Scraping page {page}: {url}")
         html = getPage(url)
         soup = BeautifulSoup(html, "html.parser")
         exercises = soup.select("div.cell.small-12.bp600-6 .node-title a")
-        exercisesNames = [currE.text for currE in exercises]
+        exercisesNames = [currE.text.strip() for currE in exercises]
+        index = 0
+        print(exercisesNames)
         exercisesUrls = [exercise.get("href") for exercise in exercises]
+        
 
         for exerciseUrl in exercisesUrls:
             exerciseData = individualExercise(exerciseUrl)
+            print (exerciseData)
             if exerciseData:
                 data[exercisesNames[index]] = exerciseData
+                index+=1
         
         print(data)
+        
 
         nextButton = soup.select_one(".pager-next a")
         if nextButton:
