@@ -17,7 +17,7 @@ chromeOptions = Options()
 chromeOptions.add_argument("--disable-gpu")
 chromeOptions.add_argument("--disable-software-rasterizer") 
 
-##chromeOptions.add_argument("--headless")
+#chromeOptions.add_argument("--headless")
 ##
 
 ##Start the driver
@@ -47,17 +47,22 @@ data = {}
 
 
 
-def getAttributes():
+def getAttributes(goBackUrl):
     try:
-        nextButton = "placeholder"
-        while (len(nextButton) > 0):
-            nextButton = driver.find_elements(By.CSS_SELECTOR, ".pager-next a")
-            print("Lenght of nextButton is: ", len(nextButton))
-            
+        page = 1
+        nextButton = []
+        while True:
+            print(f"Page {page}")
+            #nextButtonUrl = nextButton[0].get_attribute("href")
             subpageExercises = driver.find_elements(By.CSS_SELECTOR, "div.cell.small-12.bp600-6 .node-title a")
             subpageExercisesNames = [currE.text for currE in subpageExercises] ##Get all exercise names
             
+            
+            
             aElementsUrls = [element.get_attribute("href") for element in subpageExercises]
+            
+
+            
             #print("Len of the exercises: ", len(aElementsUrls))
         
             global data 
@@ -92,14 +97,32 @@ def getAttributes():
                 "secondaryMuscles":otherAValues[5],
                 "image": vidID
                 }
-            
+                
                 index+=1
-            nextButton[0].click()
+                print("Current index is: ", index)
+            
+            driver.get(goBackUrl)
+            time.sleep(1)
+            nextButton = driver.find_elements(By.CSS_SELECTOR, ".pager-next a")
+
+
+            if (len(nextButton) > 0):
+                print("text is: ", nextButton[0].text)
+                print("Inside nextButton condition")
+                goBackUrl = nextButton[0].get_attribute("href")
+                driver.get(nextButton[0].get_attribute("href"))
+                page+=1
+            else:
+                print("There is no next button")
+                break
+       
+            
+
     except Exception as e:
         print(f"The error is inside the function: {e}")
 
 
-counter = 0    
+  
 for exerciseUrl in exerciseUrls: # For each subpage
     driver.get(exerciseUrl)
     time.sleep(1)
@@ -107,33 +130,11 @@ for exerciseUrl in exerciseUrls: # For each subpage
     try:
         title = driver.find_element(By.TAG_NAME, 'h1').text
         print(f"Title of the category: {title}")
-        nextButton = driver.find_elements(By.CSS_SELECTOR, "li.pager-next a")
-        nextLink = nextButton[0].get_attribute("href")
-        print("The text is: ", nextButton[0].text)
-        print(len(nextButton))
-        if (len(nextButton) > 0):
-            driver.get(nextLink)
-            exerciseE=driver.find_element(By.CSS_SELECTOR, "div.cell.small-12.bp600-6 .node-title a")
-            exerciseName = exerciseE.text
-            print("Exercise name is: ", exerciseName)
-
-        break
-        
-        
-    
-        
         #print("Len of subpage: " , len(subpageExercises))
-        
        # print("Len of subpage names: " , len(subpageExercisesNames))
         #print(subpageExercisesNames)
         #print(data)
-        getAttributes()
-        counter+=1
-        if counter == 3:
-            print(data)
-            
-            break
-        
+        getAttributes(exerciseUrl)
 
     except Exception as e:
         print(f"Error extracting data from {exerciseUrl}: {e}")
