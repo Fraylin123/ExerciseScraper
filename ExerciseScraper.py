@@ -3,13 +3,10 @@ from bs4 import BeautifulSoup
 from pymongo import MongoClient
 import time
 import re
-import pandas as pd
 
 client = MongoClient("mongodb+srv://developer:developer123@exercisecluster.9sixn.mongodb.net/?retryWrites=true&w=majority&appName=exerciseCluster")
 db = client["exercisesDb"]
 collection = db["exercises"]
-
-data = {}
 
 def getPage(url):
     baseUrl= "https://www.muscleandstrength.com"
@@ -35,22 +32,16 @@ def individualExercise(url):
     
         otherAValues = [attribute.contents[1] for attribute in otherA]
         otherAValues[-1] = otherA[-1].contents[2].text.strip()
-        
-
-        #print(otherAValues)
-        #print("exiting")
-        #exit()
-        
         youtubeURL = None
         youtubeElement = soup.select_one("div.video.responsive-embed.widescreen .video-wrap iframe")
-        vidID = None
+        vidID = "None"
 
         if youtubeElement:
             youtubeURL = youtubeElement.get("src", "")
             if "youtube" in youtubeURL:
                 pattern =  r"https://www\.youtube\.com/embed/([^?&]+)"
                 vidID = re.search(pattern, youtubeURL).group(1)
-                print("Vid id is: ", vidID)
+                #print("Vid id is: ", vidID)
         
         return {
             "primaryMuscle":primaryMuscle,
@@ -64,7 +55,6 @@ def individualExercise(url):
     except Exception as e:
         print(f"Failed to parse this page ({url}): {e}")
 
-
 def getCategory(url):
     page = 1
     while True:
@@ -74,24 +64,17 @@ def getCategory(url):
         exercises = soup.select("div.cell.small-12.bp600-6 .node-title a")
         exercisesNames = [currE.text.strip() for currE in exercises]
         index = 0
-        print(exercisesNames)
+        #print(exercisesNames)
         exercisesUrls = [exercise.get("href") for exercise in exercises]
         
 
         for exerciseUrl in exercisesUrls:
-            data = {}
             exerciseData = individualExercise(exerciseUrl)
-            print (exerciseData)
+            #print (exerciseData)
             if exerciseData:
-                data[exercisesNames[index]] = exerciseData
                 collection.update_one({"_id": exercisesNames[index]}, {"$set": exerciseData}, upsert=True )
                 index+=1
-            
-            
         
-        
-        
-
         nextButton = soup.select_one(".pager-next a")
         if nextButton:
             url = nextButton.get("href")
@@ -100,10 +83,7 @@ def getCategory(url):
         else:
             break
 
-
-
 soup = BeautifulSoup(getPage("https://www.muscleandstrength.com/exercises"), "html.parser")
-
 
 #Exercise categories links
 #exerciseLinks = driver.find_elements(By.CSS_SELECTOR, "div.mainpage-category-list .cell a")
@@ -113,21 +93,14 @@ ecUrls = []
 
 for i in range(len(ecLinks)):
     link = ecLinks[i].get("href")
-    if (link not in ecUrls and (link != "https://www.muscleandstrength.com/exercises/palmar-fascia" and link != "https://www.muscleandstrength.com/exercises/plantar-fascia")): #Exclude these "muscle" groups
+    if (link not in ecUrls and (link != "/exercises/palmar-fascia" and link != "/exercises/plantar-fascia")): #Exclude these "muscle" groups
         ecUrls.append(link)
 
-ecUrls = ecUrls[19:22]
-
+ecUrls = ecUrls[:20]
 
 for link in ecUrls:
-    print(link)
+    #print(link)
     getCategory(link)
 
         
 print("Scraping complete")
-
-
-#client = pymongo.MongoClient("mongodb://localhost:27017/")
-#testDb = client["test"]
-
-#exercisesData = testDb["exercises"]
