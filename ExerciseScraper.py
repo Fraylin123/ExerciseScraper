@@ -8,6 +8,10 @@ import pandas as pd
 data = {}
 
 def getPage(url):
+    base_url = "https://www.muscleandstrength.com"
+    if not url.startswith("http"):
+        url = f"{base_url}{url}"
+
     headers = {'User-Agent': 'Mozilla/5.0'}
     r = requests.get(url, headers=headers)
     r.raise_for_status()
@@ -20,7 +24,14 @@ def individualExercise(url):
     try:
         primaryMuscle = soup.select_one("div.field-item.even a").text.strip()
         otherA = soup.select("div.node-stats-block ul li")[1:]
+        print(otherA[1].text)
+        print(otherA[2].text)
+        print(otherA[3].text)
+
+        print("exiting")
+        exit()
         otherAValues = [attribute.text.split("\n")[1] for attribute in otherA]
+        
         youtubeURL = None
         youtubeElement = soup.select_one("div.video.responsive-embed.widescreen .video-wrap iframe")
 
@@ -51,7 +62,7 @@ def getCategory(url):
     while True:
         print(f"Scraping page {page}: {url}")
         html = getPage(url)
-        soup = BeautifulSoup(soup, "html.parser")
+        soup = BeautifulSoup(html, "html.parser")
         exercises = soup.select("div.cell.small-12.bp600-6 .node-title a")
         exercisesNames = [currE.text for currE in exercises]
         exercisesUrls = [exercise.get("href") for exercise in exercises]
@@ -75,17 +86,27 @@ def getCategory(url):
 
 soup = BeautifulSoup(getPage("https://www.muscleandstrength.com/exercises"), "html.parser")
 
-#Exercise categories links
-ecLinks = [a.get("href") for a in soup.select("div.mainpage-category-list .cell a") if a.get("href") not in ["https://www.muscleandstrength.com/exercises/palmar-fascia", "https://www.muscleandstrength.com/exercises/plantar-fascia"]]
-ecLinks = list(set(ecLinks))
 
-for ecLink in ecLinks:
-    getCategory(ecLink)
+#Exercise categories links
+#exerciseLinks = driver.find_elements(By.CSS_SELECTOR, "div.mainpage-category-list .cell a")
+ecLinks = soup.select("div.mainpage-category-list .cell a")
+
+ecUrls = []
+
+for i in range(len(ecLinks)):
+    link = ecLinks[i].get("href")
+    if (link not in ecUrls and (link != "https://www.muscleandstrength.com/exercises/palmar-fascia" and link != "https://www.muscleandstrength.com/exercises/plantar-fascia")): #Exclude these "muscle" groups
+        ecUrls.append(link)
+
+ecUrls = ecUrls[:22]
+
+
+for link in ecUrls:
+    print(link)
+    getCategory(link)
 
         
 print("Scraping complete")
-
-
 
 
 #client = pymongo.MongoClient("mongodb://localhost:27017/")
