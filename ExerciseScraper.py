@@ -1,11 +1,16 @@
 import requests
 from bs4 import BeautifulSoup
 from pymongo import MongoClient
+from dotenv import load_dotenv
 import time
 import re
+import os
+
+load_dotenv()
 
 #Establishing MongoDB connection
-client = MongoClient("mongodb+srv://developer:developer123@exercisecluster.9sixn.mongodb.net/?retryWrites=true&w=majority&appName=exerciseCluster")
+uri = os.getenv("MongoURI")
+client = MongoClient(uri)
 db = client["exercisesDb"]
 collection = db["exercises"]
 
